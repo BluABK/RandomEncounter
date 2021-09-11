@@ -38,7 +38,7 @@ namespace RandomEncounter
             damage = CalculateDamage();
 
             // Deal damage, if applicable.
-            if (hit) Defender.TakeDamage(Damage);
+            if (hit && moveUsed.Power > 0) Defender.TakeDamage(Damage);
         }
 
         protected private bool DetermineIfCrit()
