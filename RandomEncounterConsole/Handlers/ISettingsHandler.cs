@@ -4,7 +4,7 @@
     {
         public string Filename { get; set; }
 
-        public void GenerateDefaultFile(bool save = true);
+        public void CreateSettingsFile(bool save = true);
 
         public void Save();
 
@@ -12,7 +12,9 @@
 
         public void Reload();
 
-        public void GetOption();
-        public void SetOption();
+        public void Get(string settingName);
+        public void Modify(string name, string value);
+        public void Modify(string name, int value);
+        public void Modify(string name, double value);
     }
 }

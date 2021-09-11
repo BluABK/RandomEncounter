@@ -9,12 +9,6 @@ using System.IO;
 
 namespace RandomEncounterConsole.Handlers
 {
-    public class Setting<T>
-    {
-        public string Name { get; set; }
-        public T Value { get; set; }
-        public string Description { get; set; }
-    }
 
     public class SettingsHandler : ISettingsHandler
     {
@@ -22,63 +16,99 @@ namespace RandomEncounterConsole.Handlers
         public readonly string AppDirName = "RandomEncounter";
         private string appDataDir { get; set; }
         public string Filename { get; set; }
-        public string DefaultFilePath { get; set; }
+        public string DefaultPath { get; set; }
         public string FilePath { get; set; }
-        public List<string> JsonSettings { get; set; }
-        public SettingsHandler(string filename = "settings.json", bool saveDefaultFile = true)
+        public Settings Settings { get; set; }
+        public JsonSerializerOptions JsonOptions { get; set; }
+        public SettingsHandler(string filename = "settings.json", bool saveDefaultFile = true, JsonSerializerOptions jsonOptions = null)
         {
             Filename = filename;
             appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
-            DefaultFilePath = Path.Combine(appDataDir, AppDirName);
+            DefaultPath = Path.Combine(appDataDir, AppDirName);
             FilePath = Path.Combine(appDataDir, AppDirName, Filename);
 
-            System.Console.WriteLine(DefaultFilePath);
+            JsonOptions = jsonOptions ?? new JsonSerializerOptions() { WriteIndented = true };
 
-            JsonSettings = new();
+            Settings = new();
 
-            // Default settings:
-            GenerateDefaultFile(saveDefaultFile);
+            if (File.Exists(FilePath))
+            {
+                // Handle existing settings file.
+                GenerateDefaultSettings();
+                Load();
+            } else
+            {
+                // Create settings file, if none exist (using defaults).
+                CreateSettingsFile(saveDefaultFile);
+            }
         }
 
-        public void AddSetting<T>(string name, T value, string description)
-        {
-            Setting<T> setting = new Setting<T>() { Name = name, Value = value, Description = description };
-
-            JsonSettings.Add(JsonSerializer.Serialize(setting));
-        }
-
-        public void GenerateDefaultFile(bool save = true)
+        public void GenerateDefaultSettings()
         {
             // Add settings.
-            AddSetting("CreatureDefinitionsFilePath", Path.Combine(DefaultFilePath, "Creatures.json"), "JSON file containing creature definitions.");
-            AddSetting("MoveDefinitionsFilePath", Path.Combine(DefaultFilePath, "Moves.json"), "JSON file containing move definitions.");
-            AddSetting("ItemDefinitionsFilePath", Path.Combine(DefaultFilePath, "Items.json"), "JSON file containing item definitions.");
-            AddSetting("TypeDefinitionsFilePath", Path.Combine(DefaultFilePath, "Types.json"), "JSON file containing type definitions.");
+            Settings.Add("CreatureDefinitionsFilePath", Path.Combine(DefaultPath, "Creatures.json"));
+            Settings.Add("MoveDefinitionsFilePath", Path.Combine(DefaultPath, "Moves.json"));
+            Settings.Add("ItemDefinitionsFilePath", Path.Combine(DefaultPath, "Items.json"));
+            Settings.Add("TypeDefinitionsFilePath", Path.Combine(DefaultPath, "Types.json"));
+        }
 
-            // Save.
+        public void CreateSettingsFile(bool save = true)
+        {
+            GenerateDefaultSettings();
+
             if (save) Save();
         }
 
         public void Save()
         {
             // Create App dir (if not exist).
-            Directory.CreateDirectory(DefaultFilePath);
+            Directory.CreateDirectory(DefaultPath);
 
             // Write file
             using ( FileStream fs = new FileStream(FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite) )
             {
                 // Write data to file
-                foreach (string setting in JsonSettings)
+                foreach (Setting setting in Settings.GetList())
                 {
-                    fs.Write(uniEncoding.GetBytes(setting), 0, uniEncoding.GetByteCount(setting));
+                    // Determine setting value type, and create JSON string accordingly.
+                    string jsonString = string.Empty;
+                    switch (setting.Type)
+                    {
+                        case ESettingType.String:
+                            jsonString = JsonSerializer.Serialize( new JsonSetting<string>(setting.Name, setting.StringValue, setting.Description), JsonOptions );
+                            break;
+
+                        case ESettingType.Int:
+                            jsonString = JsonSerializer.Serialize( new JsonSetting<int?>(setting.Name, setting.IntValue, setting.Description), JsonOptions );
+                            break;
+
+                        case ESettingType.Double:
+                            jsonString = JsonSerializer.Serialize( new JsonSetting<double?>(setting.Name, setting.DoubleValue, setting.Description), JsonOptions );
+                            break;
+
+                        default:
+                            throw new ArgumentException($"Expected ESettingType, but got {setting.Type}");
+                    }
+                    
+                    // Write JSON string to file.
+                    fs.Write(uniEncoding.GetBytes(jsonString), 0, uniEncoding.GetByteCount(jsonString));
                 }
             }
         }
 
         public void Load()
         {
-            throw new NotImplementedException();
+            string json = string.Empty;
+
+            // Read file
+            using (StreamReader r = new StreamReader(FilePath))
+            {
+                json = r.ReadToEnd();
+            }
+
+            //JsonSerializer.Deserialize<Item>(json);
+
         }
 
         public void Reload()
@@ -86,13 +116,24 @@ namespace RandomEncounterConsole.Handlers
             throw new NotImplementedException();
         }
 
-        public void GetOption()
+        public void Get(string settingName)
         {
-            throw new NotImplementedException();
+            Settings.Get(settingName);
         }
-        public void SetOption()
+
+        public void Modify(string name, string value)
         {
-            throw new NotImplementedException();
+            Settings.Modify(name, value);
+        }
+
+        public void Modify(string name, int value)
+        {
+            Settings.Modify(name, value);
+        }
+
+        public void Modify(string name, double value)
+        {
+            Settings.Modify(name, value);
         }
     }
 }
