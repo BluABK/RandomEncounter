@@ -1,6 +1,7 @@
 ﻿using RandomEncounter;
 using RandomEncounter.Moves;
 using RandomEncounter.MoveTypes;
+using RandomEncounterConsole.Handlers;
 using System;
 using System.Collections.Generic;
 
@@ -10,6 +11,12 @@ namespace RandomEncounterConsole
     {
         static void Main()
         {
+            // Setup...
+            SettingsHandler settingHandler = new();
+
+            // Do stuff:
+
+
             Creature opponent = CreateDefaultOpponent(level: 20);
             Creature player = CreateDefaultPlayer(level: 15);
 
