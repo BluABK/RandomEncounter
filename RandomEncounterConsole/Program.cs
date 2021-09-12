@@ -1,4 +1,5 @@
-﻿using RandomEncounter;
+﻿using ASCIIGraphix;
+using RandomEncounter;
 using RandomEncounter.Moves;
 using RandomEncounter.MoveTypes;
 using RandomEncounterConsole.Handlers;
@@ -30,6 +31,11 @@ namespace RandomEncounterConsole
 
             Console.WriteLine();
             Console.WriteLine("Oh wow, you won. I am so shocked...");
+
+            // Experimental stuff
+            EncounterUi ui = new();
+            ui.PrintSample();
+            ASCIIFun();
         }
 
         static Creature CreateDefaultPlayer(int level)
@@ -40,6 +46,17 @@ namespace RandomEncounterConsole
         static Creature CreateDefaultOpponent(int level)
         {
             return new Creature("Dragon Fish", new WaterType(), level, new BaseStats(20, 10, 55, 15, 20, 80), new List<Move>() { new Flop() });
+        }
+
+        static void ASCIIFun()
+        {
+            Console.Clear();
+
+            Screen screen = new(96, 28, bgColor: ConsoleColor.White);
+
+            // Draw!
+            //screen.Draw();
+            screen.Demo(3);
         }
     }
 }
