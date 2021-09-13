@@ -82,7 +82,7 @@ namespace ASCIIGraphix
             int computedX = StartPositionLeft + x;
             int computedY = StartPositionTop + y;
 
-            if (x > Width || y > Height) throw new ArgumentException($"Was instructed to write at coord [{computedX},{computedY}], but that is OOB! (Bounds: [{Width}{Height}])");
+            if (x > Buffer.GetLength(0) || y > Buffer.GetLength(1)) throw new ArgumentException($"Was instructed to write at coord [{computedX},{computedY}], but that is OOB! (Bounds: [{Buffer.GetLength(0)},{Buffer.GetLength(1)}])");
 
             ConsoleColor _bgColor = bgColor != null ? (ConsoleColor)bgColor : BgColor;
             ConsoleColor _fgColor = fgColor != null ? (ConsoleColor)fgColor : FgColor;
