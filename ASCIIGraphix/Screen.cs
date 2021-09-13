@@ -77,17 +77,23 @@ namespace ASCIIGraphix
             }
         }
 
-        private void WriteAt(char c, int x, int y)
+        private void WriteAt(ScreenChar sc, int x, int y, ConsoleColor? bgColor = null, ConsoleColor? fgColor = null)
         {
             int computedX = StartPositionLeft + x;
             int computedY = StartPositionTop + y;
 
             if (x > Width || y > Height) throw new ArgumentException($"Was instructed to write at coord [{computedX},{computedY}], but that is OOB! (Bounds: [{Width}{Height}])");
 
+            ConsoleColor _bgColor = bgColor != null ? (ConsoleColor)bgColor : BgColor;
+            ConsoleColor _fgColor = fgColor != null ? (ConsoleColor)fgColor : FgColor;
+
             try
             {
                 Console.SetCursorPosition(computedX, computedY);
-                Console.Write(c);
+                //SetColors();
+                //Console.Write(c);
+                sc.Draw();
+                ResetColors();
             }
             catch (ArgumentOutOfRangeException e)
             {
@@ -100,17 +106,22 @@ namespace ASCIIGraphix
         {
             ResetCursorPosition();
 
-            for (int i = 0; i < Height; i++)
+            // Note to self: 96x28 = Buffer[0,0]..Buffer[95,27]
+
+            // For each row / line
+            for (int i = 0; i < Buffer.GetLength(1); ++i)
             {
                 SetColors();
-                for (int j = 0; j < Width; j++)
+                // For each column / char
+                for (int j = 0; j < Buffer.GetLength(0); ++j)
                 {
                     //Console.Write(Chars[i, j]);
                     //Console.Write(j);
                     //Console.Write(DefaultScreenChar.Char);
-                    DefaultScreenChar.Draw();
+                    //DefaultScreenChar.Draw();
 
-                    //WriteAt(Buffer[i, j].Char, i, j);
+
+                    WriteAt(Buffer[j, i], j, i);
                 }
 
                 // Fix issue with bgcolor freaking out on resize by printing a single char of default bg color, to make it look invisible.
@@ -127,6 +138,9 @@ namespace ASCIIGraphix
 
         }
 
+        /// <summary>
+        /// Clear console and issue a Draw().
+        /// </summary>
         public void Redraw()
         {
             Console.Clear();
@@ -164,25 +178,48 @@ namespace ASCIIGraphix
 
         }
 
-        public void Demo(int turns)
+        public void Demo(int turns, int delayMs = 2500)
         {
+            int debugBreakpointSenpai = 0;
             for (int i = 0; i < turns; i++)
             {
                 Draw();
-                Thread.Sleep(2500);
+                Thread.Sleep(delayMs);
 
-                FillChars(new ScreenChar('A', ConsoleColor.Blue, ConsoleColor.White));
+                FillChars(new ScreenChar(DefaultChar, ConsoleColor.Blue, ConsoleColor.Blue, DefaultBgColor, DefaultFgColor));
                 ResetCursorPosition();
-                ResetColors();
+                //ResetColors();
                 Draw();
 
-                Thread.Sleep(2500);
+                Thread.Sleep(delayMs);
 
-                FillChars(new ScreenChar('B', ConsoleColor.Blue, ConsoleColor.White));
+                FillChars(new ScreenChar('▓', ConsoleColor.DarkYellow, DefaultBgColor, DefaultBgColor, DefaultFgColor));
                 ResetCursorPosition();
-                ResetColors();
+                //ResetColors();
+                Draw();
+
+                Thread.Sleep(delayMs);
+
+                FillChars(new ScreenChar('▓', DefaultBgColor, ConsoleColor.DarkYellow, DefaultBgColor, DefaultFgColor));
+                ResetCursorPosition();
+                //ResetColors();
+                Draw();
+
+                Thread.Sleep(delayMs);
+
+                FillChars(new ScreenChar('╪', ConsoleColor.DarkGreen, ConsoleColor.Yellow, DefaultBgColor, DefaultFgColor));
+                ResetCursorPosition();
+                //ResetColors();
+                Draw();
+
+                Thread.Sleep(delayMs);
+
+                FillChars(new ScreenChar('≡', ConsoleColor.DarkGreen, ConsoleColor.White, DefaultBgColor, DefaultFgColor));
+                ResetCursorPosition();
+                //ResetColors();
                 Draw();
             }
+                int debugBreakpointSenpai2 = 0;
         }
     }
 }

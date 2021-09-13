@@ -3,6 +3,7 @@ using RandomEncounter;
 using RandomEncounter.Moves;
 using RandomEncounter.MoveTypes;
 using RandomEncounterConsole.Handlers;
+using RandomEncounterConsole.Utils;
 using System;
 using System.Collections.Generic;
 
@@ -33,8 +34,9 @@ namespace RandomEncounterConsole
             Console.WriteLine("Oh wow, you won. I am so shocked...");
 
             // Experimental stuff
-            EncounterUi ui = new();
-            ui.PrintSample();
+            //ConsoleUtils.TestColors();
+            //EncounterUi ui = new();
+            //ui.PrintSample();
             ASCIIFun();
         }
 
@@ -56,7 +58,7 @@ namespace RandomEncounterConsole
 
             // Draw!
             //screen.Draw();
-            screen.Demo(3);
+            screen.Demo(2, 300);
         }
     }
 }
