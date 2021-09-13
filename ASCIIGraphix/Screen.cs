@@ -180,7 +180,6 @@ namespace ASCIIGraphix
 
         public void Demo(int turns, int delayMs = 2500)
         {
-            int debugBreakpointSenpai = 0;
             for (int i = 0; i < turns; i++)
             {
                 Draw();
@@ -219,7 +218,6 @@ namespace ASCIIGraphix
                 //ResetColors();
                 Draw();
             }
-                int debugBreakpointSenpai2 = 0;
         }
     }
 }
