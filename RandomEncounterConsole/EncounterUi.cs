@@ -8,7 +8,7 @@ namespace RandomEncounterConsole
 {
     class EncounterUi
     {
-        public void PrintSample()
+        public static void PrintSample()
         {
             string screen = @"
 ┌──────────────────────────────────────────────┐

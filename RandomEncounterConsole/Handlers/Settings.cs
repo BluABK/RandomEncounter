@@ -5,7 +5,7 @@ namespace RandomEncounterConsole.Handlers
 {
     public class Settings : ISettings
     {
-        private Dictionary<string, Setting> dict = new();
+        private readonly Dictionary<string, Setting> dict = new();
 
         public bool Exists(string name)
         {

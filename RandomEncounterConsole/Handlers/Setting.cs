@@ -13,7 +13,7 @@ namespace RandomEncounterConsole.Handlers
 
         public Setting(string name, string settingString, string description = null)
         {
-            Name = Name;
+            Name = name;
             Description = description;
             Type = ESettingType.String;
             StringValue = settingString;
@@ -21,7 +21,7 @@ namespace RandomEncounterConsole.Handlers
 
         public Setting(string name, int settingInt, string description = null)
         {
-            Name = Name;
+            Name = name;
             Description = description;
             Type = ESettingType.Int;
             IntValue = settingInt;
@@ -31,7 +31,7 @@ namespace RandomEncounterConsole.Handlers
 
         public Setting(string name, double settingDouble, string description = null)
         {
-            Name = Name;
+            Name = name;
             Description = description;
             Type = ESettingType.Double;
             DoubleValue = settingDouble;

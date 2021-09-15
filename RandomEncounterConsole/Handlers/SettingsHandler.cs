@@ -12,9 +12,9 @@ namespace RandomEncounterConsole.Handlers
 
     public class SettingsHandler : ISettingsHandler
     {
-        private UnicodeEncoding uniEncoding = new UnicodeEncoding();
+        private readonly UnicodeEncoding uniEncoding = new();
         public readonly string AppDirName = "RandomEncounter";
-        private string appDataDir { get; set; }
+        public string AppDataDir { get; private set; }
         public string Filename { get; set; }
         public string DefaultPath { get; set; }
         public string FilePath { get; set; }
@@ -23,10 +23,10 @@ namespace RandomEncounterConsole.Handlers
         public SettingsHandler(string filename = "settings.json", bool saveDefaultFile = true, JsonSerializerOptions jsonOptions = null)
         {
             Filename = filename;
-            appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            AppDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
-            DefaultPath = Path.Combine(appDataDir, AppDirName);
-            FilePath = Path.Combine(appDataDir, AppDirName, Filename);
+            DefaultPath = Path.Combine(AppDataDir, AppDirName);
+            FilePath = Path.Combine(AppDataDir, AppDirName, Filename);
 
             JsonOptions = jsonOptions ?? new JsonSerializerOptions() { WriteIndented = true };
 
@@ -72,25 +72,14 @@ namespace RandomEncounterConsole.Handlers
                 foreach (Setting setting in Settings.GetList())
                 {
                     // Determine setting value type, and create JSON string accordingly.
-                    string jsonString = string.Empty;
-                    switch (setting.Type)
+                    string jsonString = setting.Type switch
                     {
-                        case ESettingType.String:
-                            jsonString = JsonSerializer.Serialize( new JsonSetting<string>(setting.Name, setting.StringValue, setting.Description), JsonOptions );
-                            break;
+                        ESettingType.String => JsonSerializer.Serialize(new JsonSetting<string>(setting.Name, setting.StringValue, setting.Description), JsonOptions),
+                        ESettingType.Int => JsonSerializer.Serialize(new JsonSetting<int?>(setting.Name, setting.IntValue, setting.Description), JsonOptions),
+                        ESettingType.Double => JsonSerializer.Serialize(new JsonSetting<double?>(setting.Name, setting.DoubleValue, setting.Description), JsonOptions),
+                        _ => throw new ArgumentException($"Expected ESettingType, but got {setting.Type}"),
+                    };
 
-                        case ESettingType.Int:
-                            jsonString = JsonSerializer.Serialize( new JsonSetting<int?>(setting.Name, setting.IntValue, setting.Description), JsonOptions );
-                            break;
-
-                        case ESettingType.Double:
-                            jsonString = JsonSerializer.Serialize( new JsonSetting<double?>(setting.Name, setting.DoubleValue, setting.Description), JsonOptions );
-                            break;
-
-                        default:
-                            throw new ArgumentException($"Expected ESettingType, but got {setting.Type}");
-                    }
-                    
                     // Write JSON string to file.
                     fs.Write(uniEncoding.GetBytes(jsonString), 0, uniEncoding.GetByteCount(jsonString));
                 }
@@ -99,10 +88,10 @@ namespace RandomEncounterConsole.Handlers
 
         public void Load()
         {
-            string json = string.Empty;
+            string json;
 
             // Read file
-            using (StreamReader r = new StreamReader(FilePath))
+            using (StreamReader r = new(FilePath))
             {
                 json = r.ReadToEnd();
             }
