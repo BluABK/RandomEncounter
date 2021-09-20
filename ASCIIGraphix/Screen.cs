@@ -20,6 +20,7 @@ namespace ASCIIGraphix
         public ConsoleColor FgColor { get; set; }
         public ConsoleColor DefaultBgColor { get; private set; }
         public ConsoleColor DefaultFgColor { get; private set; }
+        public IConsoleWrapper ConsoleWrapper { get; private set; }
 
         public List<GfxObject> Objects { get; private set; }
 
@@ -30,15 +31,30 @@ namespace ASCIIGraphix
         /// <param name="height"></param>
         /// <param name="bgColor"></param>
         /// <param name="fgColor"></param>
-        public Screen(int width, int height, ConsoleColor? bgColor = null, ConsoleColor? fgColor = null)
+        public Screen(int width, int height, ConsoleColor? bgColor = null, ConsoleColor? fgColor = null, IConsoleWrapper console = null)
         {
-            //(int,int) CursorStartPosition = Console.GetCursorPosition();
-            StartPositionTop = Console.CursorTop;
-            StartPositionLeft = Console.CursorLeft;
+            ConsoleWrapper = console ?? new ConsoleWrapper();
+
+
+            //(int,int) CursorStartPosition = consoleWrapper.GetCursorPosition();
+            try
+            {
+                StartPositionTop = ConsoleWrapper.CursorTop;
+            } catch (NullReferenceException) {
+                StartPositionTop = 0;
+            }
+            try
+            {
+                StartPositionLeft = ConsoleWrapper.CursorLeft;
+            }
+            catch (NullReferenceException)
+            {
+                StartPositionLeft = 0;
+            }
 
             // Colors.
-            DefaultBgColor = Console.BackgroundColor;
-            DefaultFgColor = Console.ForegroundColor;
+            DefaultBgColor = ConsoleWrapper.BackgroundColor;
+            DefaultFgColor = ConsoleWrapper.ForegroundColor;
 
             BgColor = bgColor != null ? (ConsoleColor)bgColor : DefaultBgColor;
             FgColor = fgColor != null ? (ConsoleColor)fgColor : DefaultBgColor;
@@ -58,20 +74,20 @@ namespace ASCIIGraphix
         }
         public void SetColors()
         {
-            Console.BackgroundColor = BgColor;
-            Console.ForegroundColor = FgColor;
+            ConsoleWrapper.BackgroundColor = BgColor;
+            ConsoleWrapper.ForegroundColor = FgColor;
         }
 
         public void ResetColorsToDefault()
         {
-            Console.BackgroundColor = DefaultBgColor;
-            Console.ForegroundColor = DefaultFgColor;
+            ConsoleWrapper.BackgroundColor = DefaultBgColor;
+            ConsoleWrapper.ForegroundColor = DefaultFgColor;
         }
 
         public void ResetColors()
         {
-            Console.BackgroundColor = BgColor;
-            Console.ForegroundColor = FgColor;
+            ConsoleWrapper.BackgroundColor = BgColor;
+            ConsoleWrapper.ForegroundColor = FgColor;
         }
 
         /// <summary>
@@ -196,9 +212,23 @@ namespace ASCIIGraphix
             return true;
         }
 
-        public void CopyToBuffer(String s)
+        /// <summary>
+        /// Takes a string argument and copies it into the Buffer.
+        /// </summary>
+        /// <param name="s"></param>
+        public void CopyToBuffer(string s)
         {
-            
+            int y = 0;
+
+            foreach (List<char> charLine in ParseAsBufferLines(s))
+            {
+                for (int x = 0; x < charLine.Count; x++)
+                {
+                    Buffer[x, y] = new ScreenChar(charLine[x], BgColor, FgColor);
+                }
+
+                y++;
+            }
         }
 
         private void WriteAt(ScreenChar sc, int x, int y)
@@ -215,14 +245,14 @@ namespace ASCIIGraphix
             try
             {
 
-                Console.SetCursorPosition(computedX, computedY);
+                ConsoleWrapper.SetCursorPosition(computedX, computedY);
                 sc.Draw();
                 ResetColors();
             }
             catch (ArgumentOutOfRangeException e)
             {
-                Console.Clear();
-                Console.WriteLine(e.Message);
+                ConsoleWrapper.Clear();
+                ConsoleWrapper.WriteLine(e.Message);
             }
         }
 
@@ -242,16 +272,38 @@ namespace ASCIIGraphix
 
                 // Fix issue with bgcolor freaking out on resize by printing a single char of default bg color, to make it look invisible.
                 ResetColorsToDefault();
-                Console.ForegroundColor = DefaultBgColor;
-                Console.Write('█'); 
+                ConsoleWrapper.ForegroundColor = DefaultBgColor;
+                ConsoleWrapper.Write('█'); 
                 
                 // Reset back to defaults.
                 ResetColorsToDefault();
-                
+
                 // Force newline
-                Console.WriteLine();
+                ConsoleWrapper.WriteLine();
+            }
+        }
+        /// <summary>
+        /// Returns the Buffer as a single string with regular linebreaks for each y.
+        /// </summary>
+        /// <returns></returns>
+        public string GetBufferAsString()
+        {
+            string s = string.Empty;
+
+            // For each row / line
+            for (int i = 0; i < Buffer.GetLength(1); ++i)
+            {
+                // For each column / char
+                for (int j = 0; j < Buffer.GetLength(0); ++j)
+                {
+                    s += Buffer[j, i].Char;
+                }
+
+                // Force newline, if and only if not on last line, or we end up adding trailing newline to returned string.
+                if (i < Buffer.GetLength(1) - 1) s += Environment.NewLine;
             }
 
+            return s;
         }
 
         /// <summary>
@@ -259,16 +311,16 @@ namespace ASCIIGraphix
         /// </summary>
         public void Redraw()
         {
-            Console.Clear();
+            ConsoleWrapper.Clear();
             Draw();
         }
 
         public void ResetCursorPosition()
         {
-            Console.SetCursorPosition(CursorStartPosition.Item1, CursorStartPosition.Item2);
+            ConsoleWrapper.SetCursorPosition(CursorStartPosition.Item1, CursorStartPosition.Item2);
             //for (int i = 0; i < Width * Height; i++)
             //{
-            //    Console.Write('\b');
+            //    consoleWrapper.Write('\b');
             //}
         }
 

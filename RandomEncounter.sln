@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ASCIIGraphix", "ASCIIGraphi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EncounterGraphix", "EncounterGraphix\EncounterGraphix.csproj", "{14CAFC42-B447-4B54-ACEC-E7011CA9824B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ASCIIGraphix.Tests", "ASCIIGraphix.Tests\ASCIIGraphix.Tests.csproj", "{0A931044-4335-4805-81D8-4C1B732952D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{14CAFC42-B447-4B54-ACEC-E7011CA9824B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14CAFC42-B447-4B54-ACEC-E7011CA9824B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14CAFC42-B447-4B54-ACEC-E7011CA9824B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A931044-4335-4805-81D8-4C1B732952D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A931044-4335-4805-81D8-4C1B732952D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A931044-4335-4805-81D8-4C1B732952D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A931044-4335-4805-81D8-4C1B732952D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

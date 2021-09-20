@@ -14,6 +14,7 @@ namespace ASCIIGraphix
         public ConsoleColor FgColor { get; }
         public ConsoleColor DefaultBgColor { get; }
         public ConsoleColor DefaultFgColor { get; }
+        public IConsoleWrapper ConsoleWrapper { get; }
         public List<GfxObject> Objects { get; }
         public void SetColors();
         public void ResetColorsToDefault();
