@@ -11,5 +11,9 @@ namespace ASCIIGraphix
         public ConsoleColor FgColor { get; set; }
         public void ResetColors();
         public void Draw();
+        /// <summary>
+        ///     Reset Char back to the default char (whitespace).
+        /// </summary>
+        public void Clear();
     }
 }

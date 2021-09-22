@@ -8,7 +8,7 @@ namespace ASCIIGraphix
         public (int, int) CursorStartPosition { get; set; }
         public int Width { get; }
         public int Height { get; }
-        public ScreenChar[,] Buffer { get; }
+        public ScreenBuffer Buffer { get; }
         public ScreenChar DefaultScreenChar { get; set; }
         public ConsoleColor BgColor { get; }
         public ConsoleColor FgColor { get; }

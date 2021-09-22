@@ -13,7 +13,7 @@ namespace ASCIIGraphix
         public int StartPositionLeft { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
-        public ScreenChar[,] Buffer { get; private set; }
+        public ScreenBuffer Buffer { get; private set; }
         public char DefaultChar = '█';
         public ScreenChar DefaultScreenChar { get; set; }
         public ConsoleColor BgColor { get; set; }
@@ -67,10 +67,10 @@ namespace ASCIIGraphix
             Height = height;
 
             // Create chars coord system.
-            Buffer = new ScreenChar[width, height];
+            Buffer = new ScreenBuffer(width, height);
 
             // Populate chars.
-            FillBuffer(DefaultScreenChar);
+            Buffer.Fill(DefaultScreenChar);
         }
         public void SetColors()
         {
@@ -91,28 +91,13 @@ namespace ASCIIGraphix
         }
 
         /// <summary>
-        /// Insert given ScreenChar into every index of the Buffer.
-        /// </summary>
-        /// <param name="sc">ScreenChar object to insert.</param>
-        public void FillBuffer(ScreenChar sc)
-        {
-            for (int i = 0; i < Buffer.GetLength(0); i++)
-            {
-                for (int j = 0; j < Buffer.GetLength(1); j++)
-                {
-                    Buffer[i, j] = sc;
-                }
-            }
-        }
-
-        /// <summary>
         /// Iterator for splitting string on line breaks.
         /// 
         /// Using an iterator is preferred over string.split() as it is more efficient and avoids wasted memory (string.Split stores both copies).
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        protected static IEnumerable<string> SplitToLines(string input)
+        protected static IEnumerable<string> StringAsLines(string input)
         {
             if (input == null) yield break;
 
@@ -154,12 +139,46 @@ namespace ASCIIGraphix
         {
             int count = 0;
 
-            foreach (string line in SplitToLines(s))
+            foreach (string line in StringAsLines(s))
             {
                 count++;
             }
 
             return count;
+        }
+
+        private void WriteAt(ScreenChar sc, int x, int y)
+        {
+            int computedX = StartPositionLeft + x;
+            int computedY = StartPositionTop + y;
+
+            if (x > Buffer.LengthX || y > Buffer.LengthY)
+            {
+                throw new ArgumentException($"Was instructed to write at coord [{computedX}, {computedY}], " +
+                    $"but that is OOB! (Bounds: [{Buffer.LengthX}, {Buffer.LengthY}])");
+            }
+
+            try
+            {
+
+                ConsoleWrapper.SetCursorPosition(computedX, computedY);
+                sc.Draw();
+                ResetColors();
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                ConsoleWrapper.Clear();
+                ConsoleWrapper.WriteLine(e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Insert given ScreenChar into every index of the Buffer.
+        /// </summary>
+        /// <param name="sc">ScreenChar object to insert.</param>
+        public void Fill(ScreenChar sc)
+        {
+            Buffer.Fill(sc);
         }
 
         /// <summary>
@@ -171,15 +190,15 @@ namespace ASCIIGraphix
         {
             List<List<char>> charLines = new();
             //int sourceLineCount = GetLineCount(s);
-            
-            //if (sourceLineCount > Height) throw new ScreenHeightExceededException($"Given string exceeds height, {sourceLineCount} > {Height}!");
-            
-            int lineCount = 0;
-            foreach (string stringLine in SplitToLines(s)) // TODO: Replace with for? (Performance VS readability).
-            {
-                if (stringLine.Length > Width) throw new ScreenWidthExceededException($"Given string exceeds width on line {lineCount+1}, {stringLine.Length} > {Width}!");
 
-                charLines.Add( new(stringLine.ToCharArray()) );
+            //if (sourceLineCount > Height) throw new ScreenHeightExceededException($"Given string exceeds height, {sourceLineCount} > {Height}!");
+
+            int lineCount = 0;
+            foreach (string stringLine in StringAsLines(s)) // TODO: Replace with for? (Performance VS readability).
+            {
+                if (stringLine.Length > Width) throw new ScreenWidthExceededException($"Given string exceeds width on line {lineCount + 1}, {stringLine.Length} > {Width}!");
+
+                charLines.Add(new(stringLine.ToCharArray()));
 
                 lineCount++;
             }
@@ -187,29 +206,6 @@ namespace ASCIIGraphix
             if (lineCount > Height) throw new ScreenHeightExceededException($"Given string exceeds height, {lineCount} > {Height}!");
 
             return charLines;
-        }
-
-
-        /// <summary>
-        /// Checks if the given string fits in the Buffer (NB: newlines are stripped).
-        /// </summary>
-        /// <param name="s"></param>
-        /// <returns></returns>
-        public bool FitsInBuffer(string s)
-        {
-            int lineCount = 0;
-            foreach (string stringLine in SplitToLines(s)) // TODO: Replace with for? (Performance VS readability).
-            {
-                // If line exceeds width, it won't fit.
-                if (stringLine.Length > Width) return false;
-
-                lineCount++;
-            }
-
-            // If amount of lines are larger than height, it won't fit.
-            if (lineCount > Height) return false;
-
-            return true;
         }
 
         /// <summary>
@@ -231,41 +227,16 @@ namespace ASCIIGraphix
             }
         }
 
-        private void WriteAt(ScreenChar sc, int x, int y)
-        {
-            int computedX = StartPositionLeft + x;
-            int computedY = StartPositionTop + y;
-
-            if (x > Buffer.GetLength(0) || y > Buffer.GetLength(1))
-            {
-                throw new ArgumentException($"Was instructed to write at coord [{computedX},{computedY}], " +
-                    $"but that is OOB! (Bounds: [{Buffer.GetLength(0)},{Buffer.GetLength(1)}])");
-            }
-
-            try
-            {
-
-                ConsoleWrapper.SetCursorPosition(computedX, computedY);
-                sc.Draw();
-                ResetColors();
-            }
-            catch (ArgumentOutOfRangeException e)
-            {
-                ConsoleWrapper.Clear();
-                ConsoleWrapper.WriteLine(e.Message);
-            }
-        }
-
         public void Draw()
         {
             ResetCursorPosition();
 
             // For each row / line
-            for (int i = 0; i < Buffer.GetLength(1); ++i)
+            for (int i = 0; i < Buffer.LengthY; ++i)
             {
                 SetColors();
                 // For each column / char
-                for (int j = 0; j < Buffer.GetLength(0); ++j)
+                for (int j = 0; j < Buffer.LengthX; ++j)
                 {
                     WriteAt(Buffer[j, i], j, i);
                 }
@@ -282,29 +253,6 @@ namespace ASCIIGraphix
                 ConsoleWrapper.WriteLine();
             }
         }
-        /// <summary>
-        /// Returns the Buffer as a single string with regular linebreaks for each y.
-        /// </summary>
-        /// <returns></returns>
-        public string GetBufferAsString()
-        {
-            string s = string.Empty;
-
-            // For each row / line
-            for (int i = 0; i < Buffer.GetLength(1); ++i)
-            {
-                // For each column / char
-                for (int j = 0; j < Buffer.GetLength(0); ++j)
-                {
-                    s += Buffer[j, i].Char;
-                }
-
-                // Force newline, if and only if not on last line, or we end up adding trailing newline to returned string.
-                if (i < Buffer.GetLength(1) - 1) s += Environment.NewLine;
-            }
-
-            return s;
-        }
 
         /// <summary>
         /// Clear console and issue a Draw().
@@ -318,10 +266,6 @@ namespace ASCIIGraphix
         public void ResetCursorPosition()
         {
             ConsoleWrapper.SetCursorPosition(CursorStartPosition.Item1, CursorStartPosition.Item2);
-            //for (int i = 0; i < Width * Height; i++)
-            //{
-            //    consoleWrapper.Write('\b');
-            //}
         }
 
         /// <summary>
@@ -333,55 +277,48 @@ namespace ASCIIGraphix
             ResetColorsToDefault();
             
             // Fill buffer with default char.
-            FillBuffer(DefaultScreenChar);
+            Buffer.Fill(DefaultScreenChar);
 
             // Draw.
             Draw();
         }
 
-
-
-        //public void Update()
-        //{
-
-        //}
-
-        public void Demo(int turns, int delayMs = 2500)
+        public void Demo(int turns, int delayMs = 2500) // FIXME: Extract into own thing that makes a Screen and runs demo, not be part of Screen itself.
         {
             for (int i = 0; i < turns; i++)
             {
                 Draw();
                 Thread.Sleep(delayMs);
 
-                FillBuffer(new ScreenChar(DefaultChar, ConsoleColor.Blue, ConsoleColor.Blue, DefaultBgColor, DefaultFgColor));
+                Buffer.Fill(new ScreenChar(DefaultChar, ConsoleColor.Blue, ConsoleColor.Blue, DefaultBgColor, DefaultFgColor));
                 ResetCursorPosition();
                 //ResetColors();
                 Draw();
 
                 Thread.Sleep(delayMs);
 
-                FillBuffer(new ScreenChar('▓', ConsoleColor.DarkYellow, DefaultBgColor, DefaultBgColor, DefaultFgColor));
+                Buffer.Fill(new ScreenChar('▓', ConsoleColor.DarkYellow, DefaultBgColor, DefaultBgColor, DefaultFgColor));
                 ResetCursorPosition();
                 //ResetColors();
                 Draw();
 
                 Thread.Sleep(delayMs);
 
-                FillBuffer(new ScreenChar('▓', DefaultBgColor, ConsoleColor.DarkYellow, DefaultBgColor, DefaultFgColor));
+                Buffer.Fill(new ScreenChar('▓', DefaultBgColor, ConsoleColor.DarkYellow, DefaultBgColor, DefaultFgColor));
                 ResetCursorPosition();
                 //ResetColors();
                 Draw();
 
                 Thread.Sleep(delayMs);
 
-                FillBuffer(new ScreenChar('╪', ConsoleColor.DarkGreen, ConsoleColor.Yellow, DefaultBgColor, DefaultFgColor));
+                Buffer.Fill(new ScreenChar('╪', ConsoleColor.DarkGreen, ConsoleColor.Yellow, DefaultBgColor, DefaultFgColor));
                 ResetCursorPosition();
                 //ResetColors();
                 Draw();
 
                 Thread.Sleep(delayMs);
 
-                FillBuffer(new ScreenChar('≡', ConsoleColor.DarkGreen, ConsoleColor.White, DefaultBgColor, DefaultFgColor));
+                Buffer.Fill(new ScreenChar('≡', ConsoleColor.DarkGreen, ConsoleColor.White, DefaultBgColor, DefaultFgColor));
                 ResetCursorPosition();
                 //ResetColors();
                 Draw();

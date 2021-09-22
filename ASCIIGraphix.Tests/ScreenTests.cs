@@ -35,7 +35,7 @@ namespace ASCIIGraphix.Tests
 
             //if (screen.Buffer.Length > 0) throw new InvalidOperationException($"screen.Buffer was not empty, Length: {screen.Buffer.Length} > 0!");
 
-            screen.FillBuffer(sc);
+            screen.Fill(sc);
 
             bool allEqual = true;
             foreach (ScreenChar bsc in screen.Buffer)
@@ -86,7 +86,7 @@ namespace ASCIIGraphix.Tests
 
             screen.CopyToBuffer(expected);
 
-            Assert.AreEqual(expected, screen.GetBufferAsString());
+            Assert.AreEqual(expected, screen.Buffer.ToString());
         }
     }
 }

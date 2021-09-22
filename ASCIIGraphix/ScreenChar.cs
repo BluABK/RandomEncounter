@@ -8,7 +8,8 @@ namespace ASCIIGraphix
 {
     public class ScreenChar : IScreenChar
     {
-        public char Char { get; set; }
+        private static readonly char defaultChar = ' ';
+        public char Char { get; set; } = defaultChar;
         public ConsoleColor BgColor { get; set; }
         public ConsoleColor FgColor { get; set; } 
         public ConsoleColor DefaultBgColor { get; set; }
@@ -37,6 +38,13 @@ namespace ASCIIGraphix
             Console.BackgroundColor = BgColor;
             Console.Write(Char);
         }
-        
+
+        /// <summary>
+        ///     Reset Char back to the default char (whitespace).
+        /// </summary>
+        public void Clear()
+        {
+            Char = defaultChar;
+        }
     }
 }
