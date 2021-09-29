@@ -14,6 +14,7 @@ namespace ASCIIGraphix
         public int Width { get; private set; }
         public int Height { get; private set; }
         public ScreenBuffer Buffer { get; private set; }
+        public ScreenBuffer PreviousBuffer { get; private set; }
         public char DefaultChar = '█';
         public ScreenChar DefaultScreenChar { get; set; }
         public ConsoleColor BgColor { get; set; }
@@ -67,10 +68,13 @@ namespace ASCIIGraphix
             Height = height;
 
             // Create chars coord system.
-            Buffer = new ScreenBuffer(width, height);
+            Buffer = new ScreenBuffer(width, height, FgColor, BgColor);
 
-            // Populate chars.
+            // Populate Buffer with Default ScreenChars.
             Buffer.Fill(DefaultScreenChar);
+            
+            // Previous Buffer is currently the initial buffer, so set it as null to signify that buffer has no previous version.
+            PreviousBuffer = null;
         }
         public void SetColors()
         {
@@ -121,15 +125,6 @@ namespace ASCIIGraphix
             return s.Split(LineBreakCharacters, StringSplitOptions.None);
         }
 
-        //protected static int GetLineCount(string s)
-        //{
-        //    int count = 0;
-        //    foreach (string c in s)
-        //        if (c == '/') count++;
-
-        //    return count;
-        //}
-
         /// <summary>
         /// Returns int amount of lines in a string.
         /// </summary>
@@ -147,7 +142,7 @@ namespace ASCIIGraphix
             return count;
         }
 
-        private void WriteAt(ScreenChar sc, int x, int y)
+        private void WriteAt(in ScreenChar sc, int x, int y)
         {
             int computedX = StartPositionLeft + x;
             int computedY = StartPositionTop + y;
@@ -160,9 +155,11 @@ namespace ASCIIGraphix
 
             try
             {
-
+                // Move cursor to x, y coordinate.
                 ConsoleWrapper.SetCursorPosition(computedX, computedY);
+                // Draw ScreenChar on Screen.
                 sc.Draw();
+
                 ResetColors();
             }
             catch (ArgumentOutOfRangeException e)
@@ -178,6 +175,9 @@ namespace ASCIIGraphix
         /// <param name="sc">ScreenChar object to insert.</param>
         public void Fill(ScreenChar sc)
         {
+            // Store a copy of buffer before it was updated.
+            PreviousBuffer = Buffer.Clone();
+
             Buffer.Fill(sc);
         }
 
@@ -214,6 +214,9 @@ namespace ASCIIGraphix
         /// <param name="s"></param>
         public void CopyToBuffer(string s)
         {
+            // Store a copy of buffer before it was updated.
+            PreviousBuffer = Buffer.Clone();
+
             int y = 0;
 
             foreach (List<char> charLine in ParseAsBufferLines(s))
@@ -227,31 +230,56 @@ namespace ASCIIGraphix
             }
         }
 
-        public void Draw()
+        private void DrawLinebreak()
         {
+            // Fix issue with bgcolor freaking out on resize by printing a single char of default bg color, to make it look invisible.
+            ResetColorsToDefault();
+            ConsoleWrapper.ForegroundColor = DefaultBgColor;
+            ConsoleWrapper.Write('█');
+
+            // Force newline
+            ConsoleWrapper.WriteLine();
+        }
+
+        public void Draw(bool onlyDrawChange = true)
+        {
+            ScreenBufferDiff diff;
+
+            if (PreviousBuffer != null)
+            {
+                diff = ScreenBuffer.Diff(PreviousBuffer, Buffer);
+            } else
+            {
+                diff = new(Width, Height);
+            }
+
             ResetCursorPosition();
 
             // For each row / line
-            for (int i = 0; i < Buffer.LengthY; ++i)
+            for (int y = 0; y < Buffer.LengthY; y++)
             {
-                SetColors();
                 // For each column / char
-                for (int j = 0; j < Buffer.LengthX; ++j)
+                for (int x = 0; x < Buffer.LengthX; x++)
                 {
-                    WriteAt(Buffer[j, i], j, i);
+                    if (PreviousBuffer != null && onlyDrawChange)
+                    {
+                        // Only draw if the char differs.
+                        if (diff[x, y].Differs == true)
+                        {
+                            WriteAt(Buffer[x, y], x, y);
+                        }
+                    } else
+                    {
+                        WriteAt(Buffer[x, y], x, y);
+                    }
                 }
 
-                // Fix issue with bgcolor freaking out on resize by printing a single char of default bg color, to make it look invisible.
-                ResetColorsToDefault();
-                ConsoleWrapper.ForegroundColor = DefaultBgColor;
-                ConsoleWrapper.Write('█'); 
-                
-                // Reset back to defaults.
-                ResetColorsToDefault();
-
-                // Force newline
-                ConsoleWrapper.WriteLine();
+                // Only insert linebreak if we're drawing a full buffer (which will have multiple lines)
+                if (PreviousBuffer == null || onlyDrawChange == false) DrawLinebreak();
             }
+
+            // Reset back to defaults.
+            ResetColorsToDefault();
         }
 
         /// <summary>
@@ -273,6 +301,9 @@ namespace ASCIIGraphix
         /// </summary>
         public void Clear()
         {
+            // Store a copy of buffer before it was updated.
+            PreviousBuffer = Buffer.Clone();
+
             // Reset colors.
             ResetColorsToDefault();
             

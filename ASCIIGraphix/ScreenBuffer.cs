@@ -31,15 +31,39 @@ namespace ASCIIGraphix
         public int LengthY => Buffer.GetLength(1);
 
         public int Length => Buffer.Length;
+        protected ConsoleColor bgColor;
+        protected ConsoleColor fgColor;
 
-        public ScreenBuffer(int xDimensions, int yDimensions)
+        public ScreenBuffer(int xDimensions, int yDimensions, ConsoleColor bgColor, ConsoleColor fgColor)
         {
             Buffer = new ScreenChar[xDimensions, yDimensions];
+            this.bgColor = bgColor;
+            this.fgColor = fgColor;
         }
 
-        public ScreenBuffer(ScreenChar[,] premadeSCArray)
+        public ScreenBuffer(ScreenChar[,] premadeSCArray, ConsoleColor bgColor, ConsoleColor fgColor)
         {
-            Buffer = premadeSCArray;
+            Buffer = CloneScreenCharArray(premadeSCArray);
+            this.bgColor = bgColor;
+            this.fgColor = fgColor;
+        }
+
+        public static ScreenChar[,] CloneScreenCharArray(ScreenChar[,] scs)
+        {
+            int xLength = scs.GetLength(0);
+            int yLength = scs.GetLength(1);
+
+            ScreenChar[,] newArray = new ScreenChar[xLength, yLength];
+
+            for (int x = 0; x < xLength; x++)
+            {
+                for (int y = 0; y < yLength; y++)
+                {
+                    newArray[x, y] = scs[x,y].Clone();
+                }
+            }
+
+            return newArray;
         }
 
         /// <summary>
@@ -101,6 +125,25 @@ namespace ASCIIGraphix
                 for (int j = 0; j < LengthY; j++)
                 {
                     Buffer[i, j] = sc;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Insert given ScreenChars into every index of the Buffer.
+        /// </summary>
+        /// <param name="sc">ScreenChar object to insert.</param>
+        public void Fill(ScreenChar[] scs)
+        {
+            if (scs.Length != Buffer.Length) throw new ArgumentException("ScreenChar object array length not equal to buffer ScreenChar length!");
+
+            int index = 0;
+            for (int x = 0; x < LengthX; x++)
+            {
+                for (int y = 0; y < LengthY; y++)
+                {
+                    Buffer[x, y] = scs[index];
+                    index++;
                 }
             }
         }
@@ -193,5 +236,86 @@ namespace ASCIIGraphix
                 Buffer[x, y] = value;
             }
         }
+        /// <summary>
+        /// Get a diff between given buffer and the current one.
+        /// </summary>
+        /// <param name="bufferToDiff"></param>
+        /// <param name="onlyDiffEntries"></param>
+        /// <returns>List of ScreenBufferDiffItem where A is current buffer and B is the given one.</returns>
+        public ScreenBufferDiff Diff(string bufferToDiff)
+        {
+            //if (!Fits(diffBuffer)) throw new ArgumentException("Given Buffer contents does not fit within this Buffer!");
+            
+            ScreenBufferDiff diff = new(LengthX, LengthY);
+
+            int y = 0;
+            foreach (string stringLine in StringAsLines(bufferToDiff)) // TODO: Replace with for? (Performance VS readability).
+            {
+                // If line exceeds width, it won't fit.
+                if (stringLine.Length > LengthX) throw new ArgumentException("Given Buffer contents exceeds this Buffer's width!");
+
+                for (int x = 0; x < stringLine.Length; x++)
+                {
+                    //bool differs = stringLine[x] != Buffer[x, y].Char;
+
+                    diff[x, y] = new ScreenBufferDiffItem(x, y, a: Buffer[x, y], b: new(stringLine[x], Buffer[x, y].BgColor, Buffer[x, y].FgColor));
+                }
+                // Move y position to the next line.
+                y++;
+            }
+
+            // If amount of lines are larger than height, it won't fit.
+            if (y > LengthY) throw new ArgumentException("Given Buffer contents exceeds this Buffer's height!");
+
+            return diff;
+        }
+
+        public ScreenBufferDiff Diff(in ScreenBuffer diffBuffer)
+        {
+            //return Diff(diffBuffer.ToString());
+            ScreenBufferDiff diff = new(LengthX, LengthY);
+            
+            // For each row / line
+            for (int y = 0; y < LengthY; ++y)
+            {
+                // For each column / char
+                for (int x = 0; x < LengthX; ++x)
+                {
+                    diff[x, y] = new ScreenBufferDiffItem(x, y, a: Buffer[x, y], b: diffBuffer[x, y]);
+                }
+            }
+
+            return diff;
+        }
+
+        public static ScreenBufferDiff Diff(in ScreenBuffer a, in ScreenBuffer b)
+        {
+            if (a.LengthX != b.LengthX || a.LengthY != b.LengthY || a.Rank != b.Rank) throw new ArgumentException("ScreenBuffer a and b have mismatching dimensions or criteria!");
+            //return Diff(diffBuffer.ToString());
+            ScreenBufferDiff diff = new(a.LengthX, a.LengthY);
+
+            // For each row / line
+            for (int y = 0; y < a.LengthY; ++y)
+            {
+                // For each column / char
+                for (int x = 0; x < a.LengthX; ++x)
+                {
+                    diff[x, y] = new ScreenBufferDiffItem(x, y, a[x, y], b[x, y]);
+                }
+            }
+
+            return diff;
+        }
+
+        /// <summary>
+        /// Returns a cloned copy of this ScreenBuffer.
+        /// </summary>
+        /// <returns>A cloned copy of itself.</returns>
+        public ScreenBuffer Clone()
+        {
+            return new ScreenBuffer(premadeSCArray: Buffer, bgColor, fgColor);
+        }
+
+
     }
 }

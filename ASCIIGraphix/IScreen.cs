@@ -9,6 +9,7 @@ namespace ASCIIGraphix
         public int Width { get; }
         public int Height { get; }
         public ScreenBuffer Buffer { get; }
+        public ScreenBuffer PreviousBuffer { get; }
         public ScreenChar DefaultScreenChar { get; set; }
         public ConsoleColor BgColor { get; }
         public ConsoleColor FgColor { get; }
@@ -19,7 +20,7 @@ namespace ASCIIGraphix
         public void SetColors();
         public void ResetColorsToDefault();
         public void ResetCursorPosition();
-        public void Draw();
+        public void Draw(bool onlyDrawChange);
 
     }
 }

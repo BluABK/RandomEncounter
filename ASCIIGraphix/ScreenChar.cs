@@ -46,5 +46,26 @@ namespace ASCIIGraphix
         {
             Char = defaultChar;
         }
+
+        public bool IsEqualTo(ScreenChar sc)
+        {
+            return (Char == sc.Char) 
+                && (BgColor == sc.BgColor) 
+                && (FgColor == sc.FgColor);
+        }
+
+        public bool IsEqualToChar(char c)
+        {
+            return Char == c;
+        }
+
+        /// <summary>
+        /// Returns a cloned copy of this ScreenChar.
+        /// </summary>
+        /// <returns>A cloned copy of itself.</returns>
+        public ScreenChar Clone()
+        {
+            return new ScreenChar(Char, BgColor, FgColor, DefaultBgColor, DefaultFgColor);
+        }
     }
 }
