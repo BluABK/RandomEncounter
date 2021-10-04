@@ -10,7 +10,7 @@ namespace RandomEncounterConsole
 {
     public class MovePlayback
     {
-        private readonly MoveOutcome outcome;
+        public readonly MoveOutcome outcome;
 
         public MovePlayback(MoveOutcome outcome)
         {

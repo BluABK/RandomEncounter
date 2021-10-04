@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace EncounterGraphix
 {
-    class Thingie
+    public class HealthBar : Bar
     {
+        public HealthBar() : base()
+        {
+            
+        }
     }
 }

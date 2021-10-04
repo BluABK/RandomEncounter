@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ASCIIGraphix\ASCIIGraphix.csproj" />
+    <ProjectReference Include="..\RandomEncounter\RandomEncounter.csproj" />
   </ItemGroup>
 
 </Project>
