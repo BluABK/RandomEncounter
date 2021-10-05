@@ -2,7 +2,7 @@
 {
     public interface ICombatFrame : IFrame
     {
-        public CreatureInfoElement DefenderInfo { get; }
-        public CreatureInfoElement AttackerInfo { get; }
+        public CreatureInfoBox Defender { get; }
+        public CreatureInfoBox Attacker { get; }
     }
 }

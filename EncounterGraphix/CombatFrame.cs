@@ -4,35 +4,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ASCIIGraphix;
+using ASCIIGraphix.GfxObjects;
 using RandomEncounter;
 
 namespace EncounterGraphix
 {
     public class CombatFrame : ICombatFrame
     {
-        public CreatureInfoElement DefenderInfo { get; private set ; }
-        public CreatureInfoElement AttackerInfo { get; private set; }
-        public List<FrameElement> Elements { get; private set; }
+        public CreatureInfoBox Defender { get; private set ; }
+        public CreatureInfoBox Attacker { get; private set; }
+        public List<GfxObject> Elements { get; private set; }
 
         public CombatFrame(Creature attacker, Creature defender, Screen screen)
         {
-            AttackerInfo = new CreatureInfoElement(attacker, screen.Width, screen.Height, padLeft: true);
-            DefenderInfo = new CreatureInfoElement(defender, screen.Width, screen.Height, showHpNumbers: false);
+            Attacker = new CreatureInfoBox(attacker, screen.Width, screen.Height, hasPaddingLeft: true);
+            Defender = new CreatureInfoBox(defender, screen.Width, screen.Height, showHpNumbers: false);
 
-            Elements = new List<FrameElement>
+            Elements = new List<GfxObject>
             {
-                AttackerInfo,
-                DefenderInfo
+                Attacker,
+                Defender
             };
-        }
-
-        private string GenerateDefenderSection()
-        {
-            string lines = string.Empty;
-
-            //foreach(string line in DefenderInfo.ToString())
-
-            return lines;
         }
 
         /// <summary>
@@ -85,9 +77,9 @@ namespace EncounterGraphix
                                                                                                 ";
 
             string frame =
-@$"{DefenderInfo}
+@$"{Defender}
 {midSection}
-{AttackerInfo}
+{Attacker}
 ╔════════════════════════════════════╦═════════════════════════════╤═══════════════════════════╗
 ║                                    ║ ┌──── ─┬─ ┌──── ┬   ┬ ──┬── │                           ║
 ║                                    ║ ├────  │  │ ──┐ ├───┤   │   │            ITEM           ║

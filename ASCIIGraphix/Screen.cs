@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ASCIIGraphix.GfxObjects;
 
 namespace ASCIIGraphix
 {
@@ -105,13 +106,11 @@ namespace ASCIIGraphix
         {
             if (input == null) yield break;
 
-            using (System.IO.StringReader reader = new(input))
+            using System.IO.StringReader reader = new(input);
+            string line;
+            while ((line = reader.ReadLine()) != null)
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    yield return line;
-                }
+                yield return line;
             }
         }
 

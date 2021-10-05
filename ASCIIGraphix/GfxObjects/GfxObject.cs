@@ -1,4 +1,4 @@
-﻿namespace ASCIIGraphix
+﻿namespace ASCIIGraphix.GfxObjects
 {
     public class GfxObject
     {

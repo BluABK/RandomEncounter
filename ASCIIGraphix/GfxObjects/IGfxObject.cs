@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ASCIIGraphix
+namespace ASCIIGraphix.GfxObjects
 {
     public interface IGfxObject
     {

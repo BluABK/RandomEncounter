@@ -32,6 +32,7 @@ namespace RandomEncounterConsole
             // (Re-)create creatures (due to having used the previous ones already).
             opponent = CreateDefaultOpponent(level: 20);
             player = CreateDefaultPlayer(level: 15);
+
             AutoplayEncounter(screen, player, opponent, 1000);
             Thread.Sleep(1500);
 
@@ -59,6 +60,14 @@ namespace RandomEncounterConsole
             Console.WriteLine();
             Console.WriteLine("Oh wow, you won. I am so shocked...");
         }
+
+        private static void DrawFrame(Screen screen, Creature player, Creature opponent)
+        {
+            CombatFrame frame = new(player, opponent, screen);
+            screen.CopyToBuffer(frame.ToString());
+            screen.Draw();
+        }
+
         /// <summary>
         /// Performs a move and draws the resulting frame to screen.
         /// </summary>
@@ -83,12 +92,7 @@ namespace RandomEncounterConsole
 
             MoveOutcome outcome = movePlayback.outcome;
 
-            CombatFrame frame = new CombatFrame(player, opponent, screen);
-            string frameStr = frame.ToString(); // TODO: Remove (debug)
-            string atk = frame.AttackerInfo.ToString(); // TODO: Remove (debug)
-            string def = frame.DefenderInfo.ToString(); // TODO: Remove (debug)
-            screen.CopyToBuffer(frame.ToString());
-            screen.Draw();
+            DrawFrame(screen, player, opponent);
 
             return outcome;
         }
@@ -102,6 +106,9 @@ namespace RandomEncounterConsole
         private static void AutoplayEncounter(Screen screen, Creature player, Creature opponent, int frameDelay = 1000)
         {
             screen.Clear();
+
+            // Initial screen pre any outcome.
+            DrawFrame(screen, player, opponent);
 
             while (true)
             {
@@ -143,7 +150,6 @@ namespace RandomEncounterConsole
             char[] barArr = new char[charMax];
             double hpPercentageDouble = (double)hpPercentage;
             char barChar = '■';
-            string bar = string.Empty;
             double percentPerChar = 100.0 / 40.0; // 2.5% per char.
 
             int hpCharsToFill = (int)(hpPercentageDouble / percentPerChar);

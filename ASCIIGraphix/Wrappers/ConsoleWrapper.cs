@@ -26,20 +26,25 @@ namespace ASCIIGraphix
         [UnsupportedOSPlatform("browser")]
         public ConsoleColor ForegroundColor { get => Console.ForegroundColor; set => Console.ForegroundColor = value; }
         [UnsupportedOSPlatform("browser")]
-        public TextReader In { get => Console.In; }
+        public TextReader In => Console.In;
+
         [UnsupportedOSPlatform("browser")]
         public Encoding InputEncoding { get => Console.InputEncoding; set => Console.InputEncoding = value; }
-        public bool IsErrorRedirected { get => Console.IsErrorRedirected; }
+        public bool IsErrorRedirected => Console.IsErrorRedirected;
         public int WindowWidth { get => Console.WindowWidth; [SupportedOSPlatform("windows")]set => Console.WindowWidth = value; }
-        public bool IsOutputRedirected { get => Console.IsOutputRedirected; }
-        public bool KeyAvailable { get => Console.KeyAvailable; }
+        public bool IsOutputRedirected => Console.IsOutputRedirected;
+        public bool KeyAvailable => Console.KeyAvailable;
+
         [UnsupportedOSPlatform("browser")]
-        public int LargestWindowHeight { get => Console.LargestWindowHeight; }
+        public int LargestWindowHeight => Console.LargestWindowHeight;
+
         [UnsupportedOSPlatform("browser")]
-        public int LargestWindowWidth { get => Console.LargestWindowWidth; }
+        public int LargestWindowWidth => Console.LargestWindowWidth;
+
         [SupportedOSPlatform("windows")]
-        public bool NumberLock { get => Console.NumberLock; }
-        public TextWriter Out { get => Console.Out; }
+        public bool NumberLock => Console.NumberLock;
+
+        public TextWriter Out => Console.Out;
         public Encoding OutputEncoding { get => Console.OutputEncoding; set => Console.OutputEncoding = value; }
         public string Title { [SupportedOSPlatform("windows")]get => Console.Title; set => Console.Title = value; }
         [UnsupportedOSPlatform("browser")]
@@ -50,12 +55,11 @@ namespace ASCIIGraphix
         [UnsupportedOSPlatform("browser")]
         public ConsoleColor BackgroundColor { get => Console.BackgroundColor; set => Console.BackgroundColor = value; }
         [UnsupportedOSPlatform("browser")]
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         public event ConsoleCancelEventHandler? CancelKeyPress
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
         {
-            add { Console.CancelKeyPress += value; }
-            remove { Console.CancelKeyPress -= value; }
+            add => Console.CancelKeyPress += value;
+            remove => Console.CancelKeyPress -= value;
         }
 
         public void Beep()

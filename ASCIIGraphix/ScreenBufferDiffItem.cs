@@ -2,11 +2,11 @@
 {
     public class ScreenBufferDiffItem
     {
-        public ScreenChar A {get; private set;}
-        public ScreenChar B {get; private set;}
+        public ScreenChar A { get; }
+        public ScreenChar B { get; }
         public int X { get; set; }
         public int Y { get; set; }
-        public bool Differs { get; private set;}
+        public bool Differs { get; }
 
         public ScreenBufferDiffItem(int x, int y, in ScreenChar a, in ScreenChar b)
         {
@@ -17,12 +17,12 @@
             Differs = IsDifferent(a, b);
         }
 
-        private bool IsDifferent(in ScreenChar a, in ScreenChar b)
+        private static bool IsDifferent(in ScreenChar a, in ScreenChar b)
         {
             return !IsEqual(a, b);
         }
 
-        private bool IsEqual(in ScreenChar a, in ScreenChar b)
+        private static bool IsEqual(in ScreenChar a, in ScreenChar b)
         {
             return a.IsEqualTo(b);
         }
