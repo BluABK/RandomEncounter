@@ -12,8 +12,8 @@ namespace ASCIIGraphix
         public ScreenBuffer Buffer { get; }
         public ScreenBuffer PreviousBuffer { get; }
         public ScreenChar DefaultScreenChar { get; set; }
-        public ConsoleColor BgColor { get; }
-        public ConsoleColor FgColor { get; }
+        public ConsoleColor BgColor { get; set; }
+        public ConsoleColor FgColor { get; set; }
         public ConsoleColor DefaultBgColor { get; }
         public ConsoleColor DefaultFgColor { get; }
         public IConsoleWrapper ConsoleWrapper { get; }
