@@ -12,7 +12,7 @@ namespace RandomEncounterConsole
         {
             string screen = @"
 ┌──────────────────────────────────────────────┐
-│ Defender Name                           LvXX │
+│ Opponent Name                           LvXX │
 │ HP: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ │
 └──────────────────────────────────────────────┘
 

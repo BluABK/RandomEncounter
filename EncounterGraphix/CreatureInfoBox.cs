@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using ASCIIGraphix;
 using ASCIIGraphix.GfxObjects;
+using ASCIIGraphix.GfxObjects.Shapes.Box;
 using RandomEncounter;
 
 namespace EncounterGraphix
 {
-    public class CreatureInfoBox : Box
+    public class CreatureInfoBox : BoxBordered
     {
         // Chars
         private readonly char hpBarCharFilled = '■';
@@ -13,52 +16,26 @@ namespace EncounterGraphix
 
         // Other
         private readonly Creature creature;
-        private readonly int hpCharMax; // 40 chars == 100%, 
-        private readonly bool showHpNumbers;
+        private readonly int hpCharMax;
 
-        public CreatureInfoBox(Creature creature, int screenWidth, int screenHeight, int width = 48, int height = 4, bool padding = true, bool hasPaddingLeft = false, bool showHpNumbers = true)
-            : base(screenWidth, screenHeight, width, height, padding, hasPaddingLeft)
+        public CreatureInfoBox(Creature creature, IScreen screen, int width = 48, int height = 4)
+            : base(screen, width, height)
         {
-            if (screenWidth != 96 || screenHeight != 28)
-                throw new NotImplementedException(
-                    "CreatureInfoBox only implemented to work with a 96x28 resolution!");
-
-            Width = width;
-
-            if (showHpNumbers)
-            {
-                Height = height;
-            }
-            else
-            {
-                Height = height - 1;
-            }
-
-            InnerPaddingLeft = 1;
-            InnerPaddingRight = 1;
-
-            this.showHpNumbers = showHpNumbers;
-
             this.creature = creature;
 
-            hpCharMax = 40; // TODO: FIXME: Hardcoded
+            hpCharMax = InnerWidth - "HP: ".Length;
 
-            SetElementPadding();
+            // Init.
+            Init();
+
+            // Generate the box
+            Generate();
         }
 
-        protected string MakeLine(string s, bool appendNewLine = true)
+        private void Init()
         {
-            return PaddingStrLeft + '│' + GetPadding(InnerPaddingLeft) + s + GetPadding(InnerPaddingRight) + '│' + PaddingStrRight + (appendNewLine ? Environment.NewLine : "");
-        }
-
-        protected string MakeHorizontalBorderLine(bool top, bool appendNewLine = true)
-        {
-            if (top)
-            {
-                return PaddingStrLeft + $"{BorderCornerTopLeft}{CharToString(BorderHorizontal, HorizBorderWidth)}{BorderCornerTopRight}" + PaddingStrRight + (appendNewLine ? Environment.NewLine : "");
-            }
-
-            return PaddingStrLeft + $"{BorderCornerBottomLeft}{CharToString(BorderHorizontal, HorizBorderWidth)}{BorderCornerBottomRight}" + PaddingStrRight + (appendNewLine ? Environment.NewLine : "");
+            // Fill the buffer with whitespace to avoid null-pointers.
+            InnerBuffer.Fill(new ScreenChar(' ', MyScreen.BgColor, MyScreen.FgColor, MyScreen.DefaultBgColor, MyScreen.DefaultFgColor));
         }
 
         private string DrawHealthBar(int hpPercentage = 100)
@@ -87,12 +64,17 @@ namespace EncounterGraphix
             return new string(barArr);
         }
 
+
         public string NameAndLevelString()
         {
             string levelString = $"Lv{creature.Level,1}";
             string nameAndLevelPadding = GetPadding(InnerWidth - creature.Name.Length - levelString.Length);
 
             return $"{creature.Name}{nameAndLevelPadding}{levelString}";
+        }
+        public ScreenChar[] NameAndLevelSCLine(ConsoleColor bgColor, ConsoleColor fgColor, ConsoleColor? defaultBgColor = null, ConsoleColor? defaultFgColor = null)
+        {
+            return ScreenChar.FromString(NameAndLevelString(), bgColor, fgColor, defaultBgColor, defaultFgColor);
         }
 
         public string HPRepresentationString()
@@ -102,6 +84,11 @@ namespace EncounterGraphix
             return $"HP: {DrawHealthBar(hpLeftPct)}";
         }
 
+        public ScreenChar[] HPRepresentationSCLine(ConsoleColor bgColor, ConsoleColor fgColor, ConsoleColor? defaultBgColor = null, ConsoleColor? defaultFgColor = null)
+        {
+            return ScreenChar.FromString(HPRepresentationString(), bgColor, fgColor, defaultBgColor, defaultFgColor);
+        }
+
         protected int GetIntLengthDifference(int value, int max)
         {
             return max.ToString().Length - value.ToString().Length;
@@ -109,8 +96,6 @@ namespace EncounterGraphix
 
         public string HPNumberString(int offset = 4)
         {
-            // Only offset 
-            //if (creature.MaxHP <= 100) offset--;
             int padding = GetIntLengthDifference(creature.HP, creature.MaxHP);
 
             string hpLeft = $"{creature.HP.ToString().PadLeft(padding)}";
@@ -118,6 +103,43 @@ namespace EncounterGraphix
             string hpNumbersLhs = $"{CharToString(' ', offset)}{hpLeft} / {hpTotal}";
             
             return $"{hpNumbersLhs}{GetPadding(InnerWidth - hpNumbersLhs.Length)}";
+        }
+
+        public ScreenChar[] HPNumberSCLine(ConsoleColor bgColor, ConsoleColor fgColor, ConsoleColor? defaultBgColor = null, ConsoleColor? defaultFgColor = null, int offset = 4)
+        {
+            return ScreenChar.FromString(HPNumberString(offset), bgColor, fgColor, defaultBgColor, defaultFgColor);
+        }
+
+        public void Generate(ConsoleColor? bgColor = null, ConsoleColor? fgColor = null, ConsoleColor? defaultBgColor = null, ConsoleColor? defaultFgColor = null)
+        {
+            bgColor ??= BgColor;
+            fgColor ??= FgColor;
+            defaultBgColor ??= DefaultBgColor;
+            defaultFgColor ??= DefaultFgColor;
+
+            int linesThatFits = InnerBuffer.LengthY; // Height minus top and bottom borders
+            int y = 0;
+
+            // Add lines while they fit, else stop adding lines.
+            if (y < linesThatFits)
+            {
+                // 2nd line: Name and level.
+                SetLine(NameAndLevelSCLine((ConsoleColor)bgColor, (ConsoleColor)fgColor, defaultBgColor, defaultFgColor), y);
+                y++;
+            }
+
+            if (y < linesThatFits)
+            {
+                // 3rd line: HP represented as a bar.
+                SetLine(HPRepresentationSCLine((ConsoleColor)bgColor, (ConsoleColor)fgColor, defaultBgColor, defaultFgColor), y);
+                y++;
+            }
+
+            if (y < linesThatFits)
+            {
+                // 4th line: HP represented as numbers.
+                SetLine(HPNumberSCLine((ConsoleColor)bgColor, (ConsoleColor)fgColor, defaultBgColor, defaultFgColor), y);
+            }
         }
 
         /// <summary>
@@ -130,28 +152,59 @@ namespace EncounterGraphix
         /// └──────────────────────────────────────────────┘
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
+        public string ToStringOld()
         {
-            // 1st line: Box border (top)
-            string line1 = MakeHorizontalBorderLine(top: true);
-            // 2nd line: Name and level.
-            string line2 = MakeLine(NameAndLevelString());
-            // 3rd line: HP represented as a bar.
-            string line3 = MakeLine(HPRepresentationString());
-            // 4th line (optional): HP represented as numbers.
-            string line4 = showHpNumbers ? MakeLine(HPNumberString()) : string.Empty;
-            // Last line: Box border (bottom), don't append newline as we're on the final line.
-            string line5 = MakeHorizontalBorderLine(top: false, appendNewLine: false);
+            string[] lines = new string[Height];
+            int linesThatFits = lines.Length - 2; // Height minus top and bottom borders
+            int y = 0;
 
-            return line1 + line2 + line3 + line4 + line5;
+            // 1st line: Box border (top)
+            lines[y] = MakeHorizontalBorderLine(top: true);
+            y++;
+
+            // Buffer lines. Adds lines while they fit, else stop adding lines.
+            if (y <= linesThatFits)
+            {
+                // 2nd line: Name and level.
+                lines[y] = MakeLine(NameAndLevelString());
+                y++;
+            }
+
+            if (y <= linesThatFits)
+            {
+                // 3rd line: HP represented as a bar.
+                lines[y] = MakeLine(HPRepresentationString());
+                y++;
+            }
+
+            if (y <= linesThatFits)
+            {
+                // 4th line: HP represented as numbers.
+                lines[y] = MakeLine(HPNumberString());
+                y++;
+            }
+
+            // No more significant content lines to add, fill the rest with blanks until height req is fulfilled.
+            while (y <= linesThatFits)
+            {
+                lines[y] = MakeLine(string.Empty);
+                y++;
+            }
+
+            // Last line: Box border (bottom), don't append newline as we're on the final line.
+            lines[y] = MakeHorizontalBorderLine(top: false, appendNewLine: false);
+
+            return lines.Aggregate("", (current, line) => current + line);
         }
 
-        public ScreenChar[,] ToMatrix()
+        public override ScreenBuffer ToMatrix()
         {
-            // TODO: implement body
-            ScreenChar[,] buf = new ScreenChar[Width, Height];
+            return Buffer.Clone();
+        }
 
-            return buf;
+        public override string ToString()
+        {
+            return Buffer.ToString();
         }
     }
 }

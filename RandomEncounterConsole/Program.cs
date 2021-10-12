@@ -29,6 +29,9 @@ namespace RandomEncounterConsole
 
             Screen screen = new(96, 28, bgColor: ConsoleColor.White, fgColor: ConsoleColor.Black);
 
+            //screen.Demo(1000);
+            //AnimatedDecreasingHealthBarDemo(screen);
+
             // (Re-)create creatures (due to having used the previous ones already).
             opponent = CreateDefaultOpponent(level: 20);
             player = CreateDefaultPlayer(level: 15);
@@ -63,7 +66,7 @@ namespace RandomEncounterConsole
 
         private static void DrawFrame(Screen screen, Creature player, Creature opponent)
         {
-            CombatFrame frame = new(player, opponent, screen);
+            CombatFrame frame = new(player, opponent, screen, initChar: '▒');
             screen.CopyToBuffer(frame.ToString());
             screen.Draw();
         }
@@ -173,7 +176,7 @@ namespace RandomEncounterConsole
         {
             string frame =
 @$"┌──────────────────────────────────────────────┐                                                
-│ Defender Name                           LvXX │                                                
+│ Opponent Name                           LvXX │                                                
 │ HP: {DrawHealthBar(defenderHpPercent)} │                                                
 └──────────────────────────────────────────────┘                                                
                                                                                                 
