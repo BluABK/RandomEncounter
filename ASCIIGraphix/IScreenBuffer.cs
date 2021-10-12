@@ -53,6 +53,12 @@ namespace ASCIIGraphix
         public void Fill(ScreenChar sc);
 
         /// <summary>
+        /// Insert given ScreenChars into every index of the Buffer.
+        /// </summary>
+        /// <param name="scs">ScreenChar objects to insert.</param>
+        public void Fill(ScreenChar[] scs);
+
+        /// <summary>
         /// Checks if the given string fits in the Buffer (NB: newlines are stripped).
         /// </summary>
         /// <param name="s"></param>

@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using ASCIIGraphix.GfxObjects.Shapes.Box;
 
 namespace ASCIIGraphix
 {
     public class ScreenBuffer : IScreenBuffer, IEnumerable
     {
-        protected ScreenChar[,] Buffer { get; private set; }
+        protected ScreenChar[,] Buffer { get; }
         /// <summary>
         ///     Gets the rank (number of dimensions) of the Array. For example, a one-dimensional array 
         ///     returns 1, a two-dimensional array returns 2, and so on.
@@ -31,24 +30,26 @@ namespace ASCIIGraphix
         public int LengthY => Buffer.GetLength(1);
 
         public int Length => Buffer.Length;
-        protected ConsoleColor bgColor;
-        protected ConsoleColor fgColor;
+        public ConsoleColor BgColor { get; }
+        public ConsoleColor FgColor { get; }
 
-        public ScreenBuffer(int xDimensions, int yDimensions, ConsoleColor bgColor, ConsoleColor fgColor)
+        public ScreenBuffer(int xDimensions, int yDimensions, ConsoleColor bgColor, ConsoleColor fgColor, char? autofillChar = null)
         {
             Buffer = new ScreenChar[xDimensions, yDimensions];
-            this.bgColor = bgColor;
-            this.fgColor = fgColor;
+            BgColor = bgColor;
+            FgColor = fgColor;
+
+            if (autofillChar != null) Fill(new ScreenChar((char)autofillChar, bgColor, fgColor));
         }
 
-        public ScreenBuffer(ScreenChar[,] premadeSCArray, ConsoleColor bgColor, ConsoleColor fgColor)
+        public ScreenBuffer(in ScreenChar[,] premadeSCArray, ConsoleColor bgColor, ConsoleColor fgColor)
         {
             Buffer = CloneScreenCharArray(premadeSCArray);
-            this.bgColor = bgColor;
-            this.fgColor = fgColor;
+            BgColor = bgColor;
+            FgColor = fgColor;
         }
 
-        public static ScreenChar[,] CloneScreenCharArray(ScreenChar[,] scs)
+        public static ScreenChar[,] CloneScreenCharArray(in ScreenChar[,] scs)
         {
             int xLength = scs.GetLength(0);
             int yLength = scs.GetLength(1);
@@ -59,7 +60,9 @@ namespace ASCIIGraphix
             {
                 for (int y = 0; y < yLength; y++)
                 {
-                    newArray[x, y] = scs[x,y].Clone();
+                    //newArray[x, y] = scs[x,y].Clone();
+                    newArray[x, y] = new ScreenChar(scs[x, y].Char, scs[x, y].BgColor, scs[x, y].FgColor,
+                        scs[x, y].DefaultBgColor, scs[x, y].DefaultFgColor);
                 }
             }
 
@@ -100,7 +103,7 @@ namespace ASCIIGraphix
         /// <param name="input">
         ///     String to iterate each line over.
         /// </param>
-        protected static IEnumerable<string> StringAsLines(string input)
+        public static IEnumerable<string> StringAsLines(string input)
         {
             if (input == null) yield break;
 
@@ -142,6 +145,21 @@ namespace ASCIIGraphix
                 {
                     Buffer[x, y] = scs[index];
                     index++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Insert given char (converted to ScreenChar) into every index of the Buffer.
+        /// </summary>
+        /// <param name="c">char to insert.</param>
+        public void Fill(char c)
+        {
+            for (int i = 0; i < LengthX; i++)
+            {
+                for (int j = 0; j < LengthY; j++)
+                {
+                    Buffer[i, j] = new ScreenChar(c, BgColor, FgColor);
                 }
             }
         }
@@ -223,22 +241,17 @@ namespace ASCIIGraphix
         /// </returns>
         public ScreenChar this[int x, int y]
         {
-            get
-            {
+            get =>
                 // get the item for that index.
-                return Buffer[x, y];
-            }
-            set
-            {
+                Buffer[x, y];
+            set =>
                 // set the ScreenChar for this index.
                 Buffer[x, y] = value;
-            }
         }
         /// <summary>
         /// Get a diff between given buffer and the current one.
         /// </summary>
         /// <param name="bufferToDiff"></param>
-        /// <param name="onlyDiffEntries"></param>
         /// <returns>List of ScreenBufferDiffItem where A is current buffer and B is the given one.</returns>
         public ScreenBufferDiff Diff(string bufferToDiff)
         {
@@ -256,7 +269,7 @@ namespace ASCIIGraphix
                 {
                     //bool differs = stringLine[x] != Buffer[x, y].Char;
 
-                    diff[x, y] = new ScreenBufferDiffItem(x, y, a: Buffer[x, y], b: new(stringLine[x], Buffer[x, y].BgColor, Buffer[x, y].FgColor));
+                    diff[x, y] = new ScreenBufferDiffItem(x, y, a: Buffer[x, y], b: new ScreenChar(stringLine[x], Buffer[x, y].BgColor, Buffer[x, y].FgColor));
                 }
                 // Move y position to the next line.
                 y++;
@@ -311,9 +324,36 @@ namespace ASCIIGraphix
         /// <returns>A cloned copy of itself.</returns>
         public ScreenBuffer Clone()
         {
-            return new ScreenBuffer(premadeSCArray: Buffer, bgColor, fgColor);
+            return new ScreenBuffer(Buffer, BgColor, FgColor);
         }
 
+        public Tuple<int, int> Insert(in ScreenBuffer bufPart, int xOffset = 0, int yOffset = 0)
+        {
+            if (bufPart.Length > Buffer.Length) throw new ArgumentException("ScreenChar matrix length exceeds buffer's ScreenChar length!");
+            if (xOffset < 0 || yOffset < 0) throw new ArgumentException("X and Y offsets must be positive integers!");
 
+            int width = bufPart.GetLength(0);
+            int height = bufPart.GetLength(1);
+
+            Tuple<int, int> lastInsertCoordinate = Tuple.Create(0, 0);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    // Insert at position (using offset).
+                    Buffer[x + xOffset, y + yOffset] = bufPart[x, y].Clone();
+
+                    lastInsertCoordinate = Tuple.Create(x + xOffset, y + yOffset);
+                }
+            }
+
+            return lastInsertCoordinate;
+        }
+
+        public Tuple<int, int> Insert(in Box box, int xOffset = 0, int yOffset = 0)
+        {
+            return Insert(box.ToMatrix(), xOffset, yOffset);
+        }
     }
 }
