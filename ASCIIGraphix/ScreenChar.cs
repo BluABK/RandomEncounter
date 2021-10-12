@@ -8,8 +8,8 @@ namespace ASCIIGraphix
 {
     public class ScreenChar : IScreenChar
     {
-        private static readonly char defaultChar = ' ';
-        public char Char { get; set; } = defaultChar;
+        private const char DefaultChar = ' ';
+        public char Char { get; set; }
         public ConsoleColor BgColor { get; set; }
         public ConsoleColor FgColor { get; set; } 
         public ConsoleColor DefaultBgColor { get; set; }
@@ -19,8 +19,8 @@ namespace ASCIIGraphix
         {
             Char = c;
 
-            DefaultBgColor = defaultBgColor != null ? (ConsoleColor)defaultBgColor : bgColor;
-            DefaultFgColor = defaultFgColor != null ? (ConsoleColor)defaultFgColor : fgColor;
+            DefaultBgColor = defaultBgColor ?? bgColor;
+            DefaultFgColor = defaultFgColor ?? fgColor;
 
             BgColor = bgColor;
             FgColor = fgColor;
@@ -44,7 +44,7 @@ namespace ASCIIGraphix
         /// </summary>
         public void Clear()
         {
-            Char = defaultChar;
+            Char = DefaultChar;
         }
 
         public bool IsEqualTo(ScreenChar sc)
@@ -66,6 +66,31 @@ namespace ASCIIGraphix
         public ScreenChar Clone()
         {
             return new ScreenChar(Char, BgColor, FgColor, DefaultBgColor, DefaultFgColor);
+        }
+
+        public override string ToString()
+        {
+            return string.Empty + Char;
+        }
+        /// <summary>
+        /// Takes a string and turns it into a ScreenChar[] of the same length.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="bgColor"></param>
+        /// <param name="fgColor"></param>
+        /// <param name="defaultBgColor"></param>
+        /// <param name="defaultFgColor"></param>
+        /// <returns></returns>
+        public static ScreenChar[] FromString(string s, ConsoleColor bgColor, ConsoleColor fgColor, ConsoleColor? defaultBgColor = null, ConsoleColor? defaultFgColor = null)
+        {
+            ScreenChar[] arr = new ScreenChar[s.Length];
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                arr[i] = new ScreenChar(s.ElementAt(i), bgColor, fgColor, defaultBgColor, defaultFgColor);
+            }
+
+            return arr;
         }
     }
 }
